@@ -7,23 +7,25 @@ const {
   deleteProduct,
 } = require("../controllers/productController");
 const validateProduct = require("../utils/validateProduct");
-const { isAuthenticated, isAdmin } = require("../middlewares/authMiddlewares");
+const { isAuth, isAdmin } = require("../middlewares/authMiddlewares");
+
+// Create a new router for product routes
 const productRoutes = express.Router();
-productRoutes.post(
-  "/",
-  isAuthenticated,
-  isAdmin,
-  validateProduct,
-  createProduct
-);
-productRoutes.get("/", isAuthenticated, getAllProducts);
-productRoutes.get("/:id", isAuthenticated, getProductById);
-productRoutes.put(
-  "/:id",
-  isAuthenticated,
-  isAdmin,
-  validateProduct,
-  updateProduct
-);
-productRoutes.delete("/:id", isAuthenticated, isAdmin, deleteProduct);
+
+// Create product route with validation middleware
+productRoutes.post("/", isAuth, isAdmin, validateProduct, createProduct);
+
+// get all products route
+productRoutes.get("/", isAuth, getAllProducts);
+
+// Get product by ID route
+productRoutes.get("/:id", isAuth, getProductById);
+
+// Update product by ID route with validation middleware
+productRoutes.put("/:id", isAuth, isAdmin, validateProduct, updateProduct);
+
+// Delete product by ID route
+productRoutes.delete("/:id", isAuth, isAdmin, deleteProduct);
+
+// Export the product routes
 module.exports = productRoutes;

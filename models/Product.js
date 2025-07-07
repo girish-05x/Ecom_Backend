@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+
+// Creating Schema for Product Model
 const productSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -31,5 +33,9 @@ const productSchema = new mongoose.Schema({
     },
   },
 });
+
+// Creating Product Model with Schema
 const Product = mongoose.model("Product", productSchema);
+
+// Exporting Product Model
 module.exports = Product;

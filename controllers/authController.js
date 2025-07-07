@@ -1,9 +1,10 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { sendRegistrationmail } = require("../utils/email");
 
 // Register controller
-const register = async (req, res) => {
+const registerUser = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
@@ -17,6 +18,13 @@ const register = async (req, res) => {
     // Create new user
     const user = new User({ email, password });
     await user.save();
+
+    // Send registration email
+    await sendRegistrationmail({
+      to: user.email,
+      email: user.email,
+    });
+
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -62,4 +70,33 @@ const logout = (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ message: "Logout successful" });
 };
-module.exports = { register, login, logout };
+
+// Verify route
+const verifyUser = (req, res, next) => {
+  // Check if the token exists in the request cookies
+  const token = req.cookies.token;
+  if (!token)
+    return res.status(401).json({
+      authenticated: false,
+    });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.status(200).json({
+      authenticated: true,
+      user: decoded,
+    });
+  } catch (err) {
+    res.status(401).json({
+      authenticated: false,
+    });
+  }
+};
+
+// Export the controllers
+module.exports = {
+  registerUser,
+  login,
+  logout,
+  verifyUser,
+};

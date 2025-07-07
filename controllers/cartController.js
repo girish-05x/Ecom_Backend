@@ -1,7 +1,7 @@
-const { json } = require("express");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
-//add to cart
+
+// Add to cart
 const addToCart = async (req, res, next) => {
   try {
     const { productId, quantity } = req.body;
@@ -9,10 +9,13 @@ const addToCart = async (req, res, next) => {
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({
+        message: "Product not found",
+      });
     }
 
     let cart = await Cart.findOne({ userId });
+
     if (!cart) {
       cart = new Cart({
         userId,
@@ -33,10 +36,15 @@ const addToCart = async (req, res, next) => {
       } else {
         cart.products.push({ productId, quantity: quantity || 1 });
       }
+      // Recalculate total price
       cart.totalPrice = await calculateTotalPrice(cart.products);
     }
+
     await cart.save();
-    res.status(200).json({ success: true, cart });
+    res.status(200).json({
+      success: true,
+      cart,
+    });
   } catch (error) {
     console.error("Error adding to cart:", error);
     res.status(500).json({
@@ -44,26 +52,32 @@ const addToCart = async (req, res, next) => {
     });
   }
 };
+
+// Update quantity
 const updateQuantity = async (req, res, next) => {
   try {
     const { productId, quantity } = req.body;
     const userId = req.user._id;
+
     const cart = await Cart.findOne({ userId });
     if (!cart) {
       return res.status(404).json({
-        message: "cart not found",
+        message: "Cart not found",
       });
     }
+
     const prodIndex = cart.products.findIndex(
       (item) => item.productId.toString() === productId
     );
     if (prodIndex === -1) {
       return res.status(404).json({
-        message: "Product not found in cart",
+        message: "Product not in cart",
       });
     }
+
     cart.products[prodIndex].quantity = quantity;
     cart.totalPrice = await calculateTotalPrice(cart.products);
+
     await cart.save();
     res.status(200).json({
       success: true,
@@ -77,10 +91,12 @@ const updateQuantity = async (req, res, next) => {
   }
 };
 
+// Get products in cart
 const getCart = async (req, res, next) => {
   try {
     const userId = req.user._id;
     let cart = await Cart.findOne({ userId }).populate("products.productId");
+
     if (!cart) {
       cart = new Cart({
         userId,
@@ -89,30 +105,36 @@ const getCart = async (req, res, next) => {
       });
       await cart.save();
     }
+
     res.status(200).json({
       success: true,
       cart,
     });
   } catch (error) {
-    console.error("error fetching cart:", error);
+    console.error("Error fetching cart:", error);
     res.status(500).json({
-      message: "Eroor fetching cart",
+      message: "Error fetching cart",
     });
   }
 };
+
+// Remove product
 const removeProduct = async (req, res, next) => {
   try {
     const { productId } = req.body;
     const userId = req.user._id;
+
     const cart = await Cart.findOne({ userId });
     if (!cart)
       return res.status(404).json({
-        message: "Cart not found,",
+        message: "Cart not found",
       });
+
     cart.products = cart.products.filter(
       (item) => item.productId.toString() !== productId
     );
     cart.totalPrice = await calculateTotalPrice(cart.products);
+
     await cart.save();
     res.status(200).json({
       success: true,
@@ -125,6 +147,8 @@ const removeProduct = async (req, res, next) => {
     });
   }
 };
+
+// Clear cart
 const clearCart = async (req, res, next) => {
   try {
     const userId = req.user._id;
@@ -134,9 +158,11 @@ const clearCart = async (req, res, next) => {
         message: "Cart not found",
       });
     }
+
     cart.products = [];
     cart.totalPrice = 0;
     await cart.save();
+
     res.status(200).json({
       success: true,
       cart,
@@ -148,6 +174,8 @@ const clearCart = async (req, res, next) => {
     });
   }
 };
+
+// Helper to calculate total price
 async function calculateTotalPrice(products) {
   let total = 0;
   for (const item of products) {
@@ -158,6 +186,7 @@ async function calculateTotalPrice(products) {
   }
   return total;
 }
+
 module.exports = {
   addToCart,
   updateQuantity,

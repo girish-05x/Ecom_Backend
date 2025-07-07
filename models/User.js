@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 
-//Define the User schema
+// Define the User schema
 const userSchema = new mongoose.Schema(
   {
     email: {
@@ -19,9 +19,7 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 // hash the password before saving
@@ -32,6 +30,8 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+// Create the User model
 const User = mongoose.model("User", userSchema);
 
+// Export the User model
 module.exports = User;
